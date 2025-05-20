@@ -2,9 +2,11 @@
 
 # Server settings
 server:
-    port:8080
+    port: 8080
 
-#TODO: Service B url
+# Configuration for Service B connection
+serviceb:
+    url: http://localhost:8081
 
 #TODO: OpenTelemetry
 
