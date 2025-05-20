@@ -1,0 +1,11 @@
+# Configuration for Service A
+
+# Server settings
+server:
+    port:8080
+
+#TODO: Service B url
+
+#TODO: OpenTelemetry
+
+#TODO: Resilience4j

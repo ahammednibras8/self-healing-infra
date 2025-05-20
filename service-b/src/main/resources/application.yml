@@ -1,0 +1,7 @@
+# Configuration for Service B
+
+# Server Settings
+server:
+    port: 8081
+
+#TODO: OpenTelemetry
