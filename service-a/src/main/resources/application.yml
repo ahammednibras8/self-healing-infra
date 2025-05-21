@@ -30,9 +30,31 @@ management:
         metrics:
             # Endpoint for sending metrics
             endpoint: http://otel-collector:4318/v1/metrics
-    prometheus:
-        metrics:
-            export:
+    metrics:
+        export:
+            prometheus:
                 enabled: true
+                
         
-        #TODO: Resilience4j
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+    circuitbreaker:
+        configs:
+            default:
+                slidingWindowType: COUNT_BASED
+                slidingWindowSize: 2
+                minimumNumberOfCalls: 1
+                failureRateThreshold: 1
+                waitDurationInOpenState: 5s
+                permittedNumberOfCallsInHalfOpenState: 1
+        instances:
+            serviceB:
+                baseConfig: default
+                recordExceptions:
+                    - org.springframework.web.reactive.function.client.WebClientRequestException
+
+# Logging Configuration
+# logging:
+    # level:
+    #     io.github.resilience4j: DEBUG
+    #     org.springframework.aop: TRACE
