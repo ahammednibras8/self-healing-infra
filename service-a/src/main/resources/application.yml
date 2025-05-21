@@ -1,13 +1,38 @@
 # Configuration for Service A
 
+# Spring Application Name - Used for metrics and logging
+spring:
+    application:
+        name: service-a
+
 # Server settings
 server:
     port: 8080
 
-# Configuration for Service B connection
-serviceb:
-    url: http://localhost:8081
+# OpenTelemetry Configuration
+management:
+    # Enable all web endpoints for management (health, info, prometheus, etc.)
+    endpoints:
+        web:
+            exposure:
+                include: "*"
 
-#TODO: OpenTelemetry
+    # Configure tracing behavior
+    tracing:
+        sampling:
+            probability: 1.0
 
-#TODO: Resilience4j
+    # Configure Opentelemetry Protocol (OTLP)
+    otlp:
+        tracing:
+            # Endpoint for sending traces
+            endpoint: http://otel-collector:4318/v1/traces
+        metrics:
+            # Endpoint for sending metrics
+            endpoint: http://otel-collector:4318/v1/metrics
+    prometheus:
+        metrics:
+            export:
+                enabled: true
+        
+        #TODO: Resilience4j

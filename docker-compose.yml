@@ -1,0 +1,101 @@
+# docker-compose.yml for Opentelemetry Observability Stack
+services:
+  # Spring Boot Service A
+  service-a:
+    build:
+      context: ./service-a
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVICEB_URL=http://service-b:8081
+    networks:
+      - app-network
+    depends_on:
+      - service-b
+      - otel-collector
+
+  # Spring Boot Service B
+  service-b:
+    build:
+      context: ./service-b
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    networks:
+      - app-network
+    depends_on:
+      - otel-collector
+
+  # OpenTelemetry Collector
+  # Receives telemetry data from applications and exports it to jaeger and Prometheus
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.98.0
+    command: [ "--config=/etc/otel-collector-config.yml" ]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+      - "8888:8888" # Prometheus metrics exporter for the collector itself
+      - "13133:13133" # Health Check Extension
+    depends_on:
+      - jaeger
+      - prometheus
+    networks:
+      - app-network
+
+  # Jaeger All-in-One
+  # Recieves traces from the collector and provides a UI for visualization.
+  jaeger:
+    image: jaegertracing/all-in-one:1.58 # Use a recent version
+    ports:
+      - "16686:16686" # jaeger UI
+      - "14250:14250" # gRPC collector endpoint
+      - "14268:14268" # HTTP collector endpoint
+    environment:
+      # Confidure storage for jaeger (Using in-memory for simplicity, not for production)
+      COLLECTOR_ZIPKIN_HOST_PORT: 9411
+      COLLECTOR_OTLP_GRPC_HOST_PORT: 4317
+    networks:
+      - app-network
+
+  # Prometheus
+  # Scrape metrics from applications and the collector, stores them as time-series data.
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090" # Prometheus UI
+    networks:
+      - app-network
+
+  # Grafana
+  # Connects to Prometheus and Jaeger to visualize metrics and traces.
+  grafana:
+    image: grafana/grafana:10.4.2
+    ports:
+      - "3000:3000" # Grafana UI
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+      - jaeger
+    networks:
+      - app-network
+
+# Define a network for all services to communicate on
+networks:
+  app-network:
+    driver: bridge
+
+# Define a volume for Grafana persistent storage
+volumes:
+  grafana-storage:

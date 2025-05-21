@@ -1,7 +1,35 @@
 # Configuration for Service B
 
+# Spring Application Name - Used for metrics and logging
+spring:
+    application:
+        name: service-b
+
 # Server Settings
 server:
     port: 8081
 
-#TODO: OpenTelemetry
+# OpenTelemetry Configuration
+management:
+    # Enable all web endpoints for management
+    endpoints:
+        web:
+            exposure:
+                include: "*"
+    #Configure tracing behavior
+    tracing:
+        sampling:
+            probability: 1.0 # For development go for 100%
+    # Configure Opentelemetry Protocol (OTLP)
+    otlp:
+        tracing:
+            # Endpoint for sending traces
+            endpoint: http://otel-collector:4318/v1/traces
+        metrics:
+            # Endpoint for sending metrics
+            endpoint: http://otel-collector:4318/v1/metrics
+    # Configure Prometheus metrics endpoint
+    prometheus:
+        metrics:
+            export:
+                enabled: true

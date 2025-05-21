@@ -1,0 +1,33 @@
+# OpenTelemetry Collector Configuration
+
+receivers:
+  # OTLP receiver for traces and metrics from your applications
+  otlp:
+    protocols:
+      grpc: # gRPC endpoint for OTLP
+      http: # HTTP endpoint for OTLP
+
+exporters:
+  # Exporter for jaeger (traces)
+  otlp:
+    endpoint: jaeger:4317 # Jaeger gRPC collector endpoint within the Docker network
+    tls:
+      insecure: true # Insecure for local development
+
+  # Exporter for prometheus (metrics)
+  prometheus:
+    endpoint: 0.0.0.0:8889 # Expose Prometheus metrics for scraping by Prometheus itself
+
+processors:
+  batch:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp] # Receive traces via OTLP
+      processors: [batch] # Process with batch processor
+      exporters: [otlp] # Export traces to Jaeger
+    metrics:
+      receivers: [otlp] # Receive metrics via OTLP
+      processors: [batch] # Process with batch processor
+      exporters: [prometheus] # Export metrics to Prometheus
