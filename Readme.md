@@ -148,7 +148,7 @@ This project lays the foundation for a truly self-healing system. Future work in
 
 ## About the Author
 
-[https://www.github.com/ahammednibras8]Ahammed Nibras
+[https://www.github.com/ahammednibras8] Ahammed Nibras
 [https://www.linkedin.com/in/ahammednibras8/] Contact on LinkedIn
 [Your GitHub Profile (Optional)]
 
