@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import reactor.core.publisher.Mono;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -35,18 +36,15 @@ public class ServiceAController {
     }
 
     @GetMapping("/call-service-b")
-    @Retry(name = "serviceBRetry", fallbackMethod = "callServiceBFallback")
+    @Retry(name = "serviceBRetry")
     public Mono<String> callServiceB() {
         logger.info("Service A: Initiating call to Service B (via Retry)");
-        return serviceBService.callServiceBProtectedByCircuitBreaker(serviceBUrl);
-    }
-
-    // Fallback Method for the circuit breaker
-    public Mono<String> callServiceBFallback(Throwable t) {
-        logger.warn("Service A: Fallback executed for Service B call. Circuit Breaker state change or error: {}",
-                t.getMessage());
-        return Mono.just(
-                "Service B is currently unavailable or experiencing issue. Returning a fallback message from Service A.");
+        return serviceBService.callServiceBProtectedByCircuitBreaker(serviceBUrl)
+                .onErrorResume(t -> {
+                    logger.warn("Service A: Final Fallback executed. Error: {}", t.getMessage());
+                    return Mono.just(
+                            "Service B is currently unavailable or experiencing issues. Returning a fallback message from Service A.");
+                });
     }
 }
 
@@ -61,13 +59,14 @@ class ServiceBService {
     }
 
     // This method is protected by circuit breaker
+    @TimeLimiter(name = "serviceBTimeLimiter")
     @CircuitBreaker(name = "serviceB")
     public Mono<String> callServiceBProtectedByCircuitBreaker(String serviceBUrl) {
         logger.info("Service B Service: Attempting to call Service B at {}", serviceBUrl);
         return webClientBuilder.baseUrl(serviceBUrl)
                 .build()
                 .get()
-                .uri("/service-b/hello")
+                .uri("/service-b/slow")
                 .retrieve()
                 .bodyToMono(String.class)
                 .doOnError(e -> logger.error("Service B Service: Error during WebClient call to Service B: {}",

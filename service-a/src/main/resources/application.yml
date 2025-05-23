@@ -67,6 +67,16 @@ resilience4j:
             serviceBRetry:
                 baseConfig: default
 
+    # Resilience4j Time Limiter Configuration
+    timelimiter:
+        configs:
+            default:
+                timeoutDuration: 2s
+                cancelRunningFuture: true
+        instances:
+            serviceBTimeLimiter:
+                baseConfig: default
+
 # Logging Configuration
 # logging:
 #     level:
