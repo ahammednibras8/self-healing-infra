@@ -59,7 +59,7 @@ Follow these steps to observe the Circuit Breaker in action and see the self-hea
 ### Clone the Repository
 
 ```bash
-git clone <YOUR_REPOSITORY_URL_HERE>
+git clone https://github.com/ahammednibras8/self-healing-infra.git
 cd self-healing-infra
 ```
 
@@ -111,8 +111,8 @@ This will build and start all containers: `service-a`, `service-b`, `otel-collec
 
 4. Observe Grafana:
    - Query `resilience4j_circuitbreaker_state{job="service-a", name="serviceB"}`. You will see it transition from `0` (CLOSED) to `1` (OPEN).
-   - Query `resilience4j_circuitbreaker_calls_total{job="service-a", name="serviceB", kind="failed"}`. This counter will increase during the initial failures that cause the circuit to open.
-   - Query `resilience4j_circuitbreaker_calls_total{job="service-a", name="serviceB", kind="not_permitted"}`. This counter will rapidly increase once the circuit is OPEN, showing calls being fast-failed.
+   - Query `resilience4j_circuitbreaker_calls_seconds_count{job="service-a", name="serviceB", kind="failed"}`. This counter will increase during the initial failures that cause the circuit to open.
+   - Query `resilience4j_circuitbreaker_calls_seconds_count{job="service-a", name="serviceB", kind="not_permitted"}`. This counter will rapidly increase once the circuit is OPEN, showing calls being fast-failed.
 
 ### Test Recovery (Circuit HALF_OPEN then CLOSED)
 
@@ -132,7 +132,7 @@ This will build and start all containers: `service-a`, `service-b`, `otel-collec
 
 5. Observe Grafana:
    - Query `resilience4j_circuitbreaker_state{job="service-a", name="serviceB"}`. You will see it transition from `1` (OPEN) to `2` (HALF_OPEN), and then back to `0` (CLOSED).
-   - Query `resilience4j_circuitbreaker_calls_total{job="service-a", name="serviceB", kind="successful"}`. This counter will increase as calls succeed in HALF_OPEN and CLOSED states.
+   - Query `resilience4j_circuitbreaker_calls_seconds_count{job="service-a", name="serviceB", kind="successful"}`. This counter will increase as calls succeed in HALF_OPEN and CLOSED states.
 
 ## Future Enhancements & Roadmap
 
@@ -148,7 +148,6 @@ This project lays the foundation for a truly self-healing system. Future work in
 
 ## About the Author
 
-[https://www.github.com/ahammednibras8] Ahammed Nibras - [https://www.linkedin.com/in/ahammednibras8/] Contact on LinkedIn
-[Your GitHub Profile (Optional)]
+[Ahammed Nibras](https://www.github.com/ahammednibras8) - [Contact on LinkedIn](https://www.linkedin.com/in/ahammednibras8/)
 
 This project demonstrates a deep understanding of building robust, observable, and self-healing distributed systems – a critical skill for any modern tech organization.
