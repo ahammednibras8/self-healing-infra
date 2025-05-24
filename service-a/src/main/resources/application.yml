@@ -36,7 +36,7 @@ management:
                 enabled: true
         
         
-        # Resilience4j Circuit Breaker Configuration
+# Resilience4j Circuit Breaker Configuration
 resilience4j:
     circuitbreaker:
         configs:
@@ -51,21 +51,7 @@ resilience4j:
             serviceB:
                 baseConfig: default
                 ignoreExceptions:
-                    - org.springframework.web.reactive.function.client.WebClientRequestException
                     - java.util.concurrent.TimeoutException
-
-    # Resilience4j Retry Configuration
-    retry:
-        configs:
-            default:
-                maxAttempts: 3
-                waitDuration: 1s
-                retryExceptions:
-                    - org.springframework.web.reactive.function.client.WebClientRequestException
-                    - java.util.concurrent.TimeoutException
-        instances:
-            serviceBRetry:
-                baseConfig: default
 
     # Resilience4j Time Limiter Configuration
     timelimiter:
@@ -75,6 +61,17 @@ resilience4j:
                 cancelRunningFuture: true
         instances:
             serviceBTimeLimiter:
+                baseConfig: default
+    
+    # Resilience4j Rate Limiter Configuration
+    ratelimiter:
+        configs:
+            default:
+                limitForPeriod: 5
+                limitRefreshPeriod: 10s
+                timeoutDuration: 0s
+        instances:
+            serviceBRateLimiter:
                 baseConfig: default
 
 # Logging Configuration

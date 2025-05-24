@@ -1,5 +1,7 @@
 package com.ahammednibras.servicea;
 
+import java.time.Duration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,10 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import reactor.core.publisher.Mono;
 import org.springframework.web.bind.annotation.GetMapping;
+import reactor.util.retry.Retry;
 
 @RestController
 @RequestMapping("/service-a")
@@ -36,10 +39,16 @@ public class ServiceAController {
     }
 
     @GetMapping("/call-service-b")
-    @Retry(name = "serviceBRetry")
     public Mono<String> callServiceB() {
-        logger.info("Service A: Initiating call to Service B (via Retry)");
+        logger.info("Service A: Initiating call to Service B (via retryWhen)");
         return serviceBService.callServiceBProtectedByCircuitBreaker(serviceBUrl)
+                .retryWhen(Retry.backoff(2, Duration.ofSeconds(1))
+                        .filter(throwable -> throwable instanceof java.util.concurrent.TimeoutException ||
+                                throwable instanceof org.springframework.web.reactive.function.client.WebClientRequestException
+                                ||
+                                throwable instanceof io.github.resilience4j.ratelimiter.RequestNotPermitted)
+                        .doBeforeRetry(retrySignal -> logger.warn("Service A: Retrying call to Service B. Attempt #{}",
+                                retrySignal.totalRetries() + 1)))
                 .onErrorResume(t -> {
                     logger.warn("Service A: Final Fallback executed. Error: {}", t.getMessage());
                     return Mono.just(
@@ -59,6 +68,7 @@ class ServiceBService {
     }
 
     // This method is protected by circuit breaker
+    @RateLimiter(name = "serviceBRateLimiter")
     @TimeLimiter(name = "serviceBTimeLimiter")
     @CircuitBreaker(name = "serviceB")
     public Mono<String> callServiceBProtectedByCircuitBreaker(String serviceBUrl) {
@@ -66,7 +76,7 @@ class ServiceBService {
         return webClientBuilder.baseUrl(serviceBUrl)
                 .build()
                 .get()
-                .uri("/service-b/slow")
+                .uri("/service-b/hello")
                 .retrieve()
                 .bodyToMono(String.class)
                 .doOnError(e -> logger.error("Service B Service: Error during WebClient call to Service B: {}",
